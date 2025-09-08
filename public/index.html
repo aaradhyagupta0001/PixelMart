@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PixelMart</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="brand">PixelMart 🕹️</h1>
+    <div class="actions">
+      <button id="cartBtn">Cart (<span id="cartCount">0</span>)</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h2>Pixel-powered shopping — play while you buy ✨</h2>
+    </section>
+
+    <section class="products-grid" id="products"></section>
+  </main>
+
+  <aside class="cart-panel" id="cartPanel">
+    <h2>Your Cart</h2>
+    <ul id="cartItems"></ul>
+    <div class="cart-footer">
+      <div>Total: ₹<span id="totalPrice">0</span></div>
+      <div class="cart-actions">
+        <button id="checkoutBtn">Checkout</button>
+        <button id="clearCartBtn">Clear</button>
+      </div>
+    </div>
+  </aside>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

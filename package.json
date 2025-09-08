@@ -1,0 +1,12 @@
+{
+  "name": "pixelmart",
+  "version": "1.0.0",
+  "description": "PixelMart - mini e-commerce demo (Node + Express + static frontend)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
