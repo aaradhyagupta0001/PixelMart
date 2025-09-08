@@ -1,50 +1,23 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-memory product list (demo)
-let products = [
-  { id: 1, name: "Pixel Sneakers", price: 1299, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDxWpx5Ns12zUD6eiwiWIqmGnUxRJ1AQfQ0A&s" },
-  { id: 2, name: "Retro Headphones", price: 899, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtcZZHxEHqY7dO0QXu2W_r0nrWEPMclibFUA&s" },
-  { id: 3, name: "Byte Backpack", price: 1499, image: "data:image/jpeg;base64,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" },
-  { id: 4, name: "Mini Smartwatch", price: 2199, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_UrF08OGyAi6jrW9njt_EkwX6XTGgfoCV9Q&s" }
-];
-
-// Simple cart store per-session-demo (in-memory)
-let orders = [];
-
-// API: list products
+// Products API
 app.get('/api/products', (req, res) => {
-  res.json(products);
+  const dataPath = path.join(__dirname, 'data', 'products.json');
+  fs.readFile(dataPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Unable to fetch products' });
+    }
+    res.json(JSON.parse(data));
+  });
 });
 
-// API: create order / checkout (dummy)
-app.post('/api/checkout', (req, res) => {
-  const { cart, customer } = req.body || {};
-  if (!cart || !Array.isArray(cart) || cart.length === 0) {
-    return res.status(400).json({ error: "Cart is empty" });
-  }
-  const order = {
-    id: orders.length + 1,
-    cart,
-    customer: customer || { name: "Guest" },
-    total: cart.reduce((s, it) => s + (it.price * (it.qty || 1)), 0),
-    createdAt: new Date()
-  };
-  orders.push(order);
-  // return order confirmation
-  res.json({ success: true, orderId: order.id });
-});
-
-// fallback to index.html for client-side routes (if any)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(PORT, () => {
-  console.log(`PixelMart running at http://localhost:${PORT}`);
-});
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

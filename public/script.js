@@ -1,137 +1,59 @@
-// fetch products from backend
-async function loadProducts() {
-  try {
-    const res = await fetch('/api/products');
-    const products = await res.json();
-    renderProducts(products);
-  } catch (err) {
-    showToast('Failed to load products');
+// DOM Elements
+const productsContainer = document.getElementById('products-container');
+const cartItems = document.getElementById('cart-items');
+const cartTotal = document.getElementById('cart-total');
+
+const cart = [];
+
+// Fetch products
+fetch('/api/products')
+  .then(res => res.json())
+  .then(products => {
+    productsContainer.innerHTML = '';
+    products.forEach(product => {
+      const card = document.createElement('div');
+      card.classList.add('product-card');
+      card.innerHTML = `
+        <img src="${product.image}" alt="${product.name}" class="product-img"/>
+        <h3>${product.name}</h3>
+        <p>₹${product.price}</p>
+        <button class="add-to-cart">Add to Cart 🛒</button>
+      `;
+      productsContainer.appendChild(card);
+    });
+  })
+  .catch(err => {
+    productsContainer.innerHTML = '<p style="color:red;">Failed to load products 😢</p>';
     console.error(err);
-  }
-}
-
-const productsEl = document.getElementById('products');
-const cartBtn = document.getElementById('cartBtn');
-const cartPanel = document.getElementById('cartPanel');
-const cartItemsEl = document.getElementById('cartItems');
-const totalPriceEl = document.getElementById('totalPrice');
-const cartCountEl = document.getElementById('cartCount');
-const checkoutBtn = document.getElementById('checkoutBtn');
-const clearCartBtn = document.getElementById('clearCartBtn');
-
-let cart = [];
-
-// render
-function renderProducts(list) {
-  productsEl.innerHTML = '';
-  list.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <img src="${p.image}" alt="${p.name}" />
-      <h3>${p.name}</h3>
-      <div class="price">₹${p.price}</div>
-      <div class="actions">
-        <button class="addBtn" data-id="${p.id}">Add</button>
-        <button class="infoBtn" data-id="${p.id}">Info</button>
-      </div>
-    `;
-    productsEl.appendChild(card);
   });
-}
 
-// add to cart (delegation)
-productsEl.addEventListener('click', (e) => {
-  if (e.target.matches('.addBtn')) {
-    const id = Number(e.target.dataset.id);
-    addToCart(id);
-  } else if (e.target.matches('.infoBtn')) {
-    const id = Number(e.target.dataset.id);
-    showToast('Product info coming soon 😉');
-  }
-});
-
-// add item
-function addToCart(id) {
-  fetch('/api/products').then(r=>r.json()).then(list=>{
-    const p = list.find(x=>x.id===id);
-    if(!p) return;
-    const exists = cart.find(c=>c.id===id);
-    if (exists) exists.qty++;
-    else cart.push({...p, qty:1});
-    updateCartUI();
-    showToast(`${p.name} added to cart ✨`);
-  });
-}
-
-function updateCartUI() {
-  cartItemsEl.innerHTML = '';
+// Update cart UI
+function updateCart() {
+  cartItems.innerHTML = '';
   let total = 0;
   cart.forEach(item => {
-    total += item.price * item.qty;
+    total += item.price;
     const li = document.createElement('li');
-    li.innerHTML = `
-      <span>${item.name} x${item.qty}</span>
-      <div>
-        <button class="qtyMinus" data-id="${item.id}">-</button>
-        <button class="qtyPlus" data-id="${item.id}">+</button>
-        <span>₹${item.price * item.qty}</span>
-      </div>
-    `;
-    cartItemsEl.appendChild(li);
+    li.textContent = `${item.name} - ₹${item.price}`;
+    cartItems.appendChild(li);
   });
-  totalPriceEl.textContent = total;
-  cartCountEl.textContent = cart.reduce((s,i)=>s+i.qty,0);
+  cartTotal.textContent = total;
 }
 
-// qty controls (delegation)
-cartItemsEl.addEventListener('click', (e) => {
-  if (e.target.matches('.qtyPlus')) {
-    const id = Number(e.target.dataset.id);
-    const it = cart.find(c=>c.id===id); if (it) it.qty++;
-    updateCartUI();
-  } else if (e.target.matches('.qtyMinus')) {
-    const id = Number(e.target.dataset.id);
-    const it = cart.find(c=>c.id===id); if (it) { it.qty--; if(it.qty<=0) cart = cart.filter(x=>x.id!==id); }
-    updateCartUI();
+// Add to cart button
+document.addEventListener('click', function(e) {
+  if(e.target.classList.contains('add-to-cart')) {
+    const card = e.target.closest('.product-card');
+    const name = card.querySelector('h3').textContent;
+    const price = parseInt(card.querySelector('p').textContent.replace('₹',''));
+    cart.push({ name, price });
+    updateCart();
   }
 });
 
-// cart panel toggle
-cartBtn.addEventListener('click', () => cartPanel.classList.toggle('open'));
-
-// clear cart
-clearCartBtn && clearCartBtn.addEventListener('click', () => { cart=[]; updateCartUI(); showToast('Cart cleared'); });
-
-// checkout (dummy)
-checkoutBtn && checkoutBtn.addEventListener('click', async () => {
-  if (cart.length === 0) return showToast('Cart is empty');
-  try {
-    const res = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ cart })
-    });
-    const data = await res.json();
-    if (data && data.success) {
-      showToast('Order placed! ID: ' + data.orderId);
-      cart = []; updateCartUI(); cartPanel.classList.remove('open');
-    } else {
-      showToast('Checkout failed');
-    }
-  } catch (err) {
-    console.error(err); showToast('Checkout error');
-  }
-});
-
-// toast
-function showToast(text) {
-  const t = document.getElementById('toast');
-  t.textContent = text; t.style.display='block';
-  setTimeout(()=> t.style.display='none', 1800);
-}
-
-// init
-document.addEventListener('DOMContentLoaded', () => {
-  loadProducts();
+// Checkout
+document.getElementById('checkout').addEventListener('click', () => {
+  alert(`Checkout successful! Total: ₹${cart.reduce((sum, item) => sum + item.price, 0)}`);
+  cart.length = 0;
+  updateCart();
 });
